@@ -1,0 +1,23 @@
+# IntelliJ IDEA
+.idea/
+*.iml
+
+# Compiled class files
+/target/
+*.class
+
+# Logs
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Maven local repository
+/.mvn/
+
+# Environment files
+.env
+
+# Others
+.vscode/
