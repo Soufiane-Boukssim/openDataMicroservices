@@ -4,6 +4,7 @@ import com.soufiane.dataset_theme_service.dto.DataSetThemeResponse;
 import com.soufiane.dataset_theme_service.entity.DataSetTheme;
 import com.soufiane.dataset_theme_service.mapper.DataSetThemeMapper;
 import com.soufiane.dataset_theme_service.repository.DataSetThemeRepository;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.io.FilenameUtils;
 import org.springframework.http.HttpStatus;
@@ -26,6 +27,9 @@ public class DataSetThemeServiceImplementation implements DataSetThemeService {
     private static final String UPLOAD_DIR = System.getProperty("user.dir").replace("\\", "/") + "/uploads/images/dataset-theme/";
     private static final String imageUrl = "http://localhost:8080/api/themes/upload/image";
     private final DataSetThemeMapper dataSetThemeMapper;
+
+    private final HttpServletRequest request;
+
 
     @Override
     public List<DataSetThemeResponse> getAllThemes() {
@@ -146,8 +150,13 @@ public class DataSetThemeServiceImplementation implements DataSetThemeService {
         theme.setIconData(file.getBytes());
         theme.setIcon(imageUrl+'/'+uniqueFileName);
 
-//        String email = SecurityContextHolder.getContext().getAuthentication().getName();
-//        theme.setCreatedBy(email);
+        //String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        String email = request.getHeader("X-User-Email");
+        if (email == null || email.isEmpty()) {
+            throw new IllegalStateException("User email not found in request headers");
+        }
+
+        theme.setCreatedBy(email);
 
 
         theme.setIconPath(UPLOAD_DIR + uniqueFileName);
