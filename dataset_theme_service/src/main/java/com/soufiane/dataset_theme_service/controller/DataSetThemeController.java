@@ -2,7 +2,9 @@ package com.soufiane.dataset_theme_service.controller;
 
 import com.soufiane.dataset_theme_service.dto.DataSetThemeResponse;
 import com.soufiane.dataset_theme_service.service.DataSetThemeService;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -31,12 +33,28 @@ public class DataSetThemeController {
         return dataSetThemeService.getThemeByName(name);
     }
 
+//    @PostMapping("/save")
+//    public ResponseEntity<DataSetThemeResponse> saveTheme(
+//            @RequestParam(value = "name") String name, //by default required = true
+//            @RequestParam("description") String description,
+//            @RequestParam(value = "icon") MultipartFile file) throws IOException {
+//        DataSetThemeResponse savedTheme = dataSetThemeService.saveTheme(name,description,file);
+//        return ResponseEntity.ok(savedTheme);
+//    }
+
     @PostMapping("/save")
     public ResponseEntity<DataSetThemeResponse> saveTheme(
-            @RequestParam(value = "name") String name, //by default required = true
+            @RequestParam(value = "name") String name,
             @RequestParam("description") String description,
-            @RequestParam(value = "icon") MultipartFile file) throws IOException {
-        DataSetThemeResponse savedTheme = dataSetThemeService.saveTheme(name,description,file);
+            @RequestParam(value = "icon") MultipartFile file,
+            HttpServletRequest request) throws IOException {
+
+        String token = request.getHeader("Authorization");
+        if (token == null || token.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build(); // ou une autre gestion d'erreur
+        }
+
+        DataSetThemeResponse savedTheme = dataSetThemeService.saveTheme(name, description, file, token);
         return ResponseEntity.ok(savedTheme);
     }
 
@@ -46,8 +64,15 @@ public class DataSetThemeController {
             @PathVariable UUID id,
             @RequestParam(value = "name", required = false) String name,
             @RequestParam(value = "description", required = false) String description,
-            @RequestParam(value = "icon", required = false) MultipartFile icon) throws IOException {
-        DataSetThemeResponse updatedThemeResponse = dataSetThemeService.updateThemeById(id, name, description, icon);
+            @RequestParam(value = "icon", required = false) MultipartFile icon,
+            HttpServletRequest request) throws IOException {
+
+        String token = request.getHeader("Authorization");
+        if (token == null || token.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build(); // ou une autre gestion d'erreur
+        }
+
+        DataSetThemeResponse updatedThemeResponse = dataSetThemeService.updateThemeById(id, name, description, icon, token);
         return ResponseEntity.ok(updatedThemeResponse);
     }
 

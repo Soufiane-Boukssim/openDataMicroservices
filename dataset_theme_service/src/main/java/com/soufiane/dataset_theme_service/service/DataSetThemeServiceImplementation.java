@@ -1,12 +1,15 @@
 package com.soufiane.dataset_theme_service.service;
 
+import com.soufiane.dataset_theme_service.client.AuthServiceClient;
 import com.soufiane.dataset_theme_service.dto.DataSetThemeResponse;
 import com.soufiane.dataset_theme_service.entity.DataSetTheme;
 import com.soufiane.dataset_theme_service.mapper.DataSetThemeMapper;
 import com.soufiane.dataset_theme_service.repository.DataSetThemeRepository;
+import com.soufiane.sharedlibrary.dto.UserInfoResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.io.FilenameUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -30,6 +33,8 @@ public class DataSetThemeServiceImplementation implements DataSetThemeService {
 
     private final HttpServletRequest request;
 
+    @Autowired
+    private AuthServiceClient authServiceClient;
 
     @Override
     public List<DataSetThemeResponse> getAllThemes() {
@@ -60,17 +65,17 @@ public class DataSetThemeServiceImplementation implements DataSetThemeService {
     }
 
     @Override
-    public DataSetThemeResponse saveTheme(String name, String description, MultipartFile file) throws IOException {
+    public DataSetThemeResponse saveTheme(String name, String description, MultipartFile file, String token) throws IOException {
         validateThemeInputs(name, description, file);
         checkIfThemeNameExists(name);
         ensureUploadDirectoryExists();
-        DataSetTheme theme = createThemeObject(name, description, file);
+        DataSetTheme theme = createThemeObject(name, description, file, token);
         theme= dataSetThemeRepository.save(theme);
         return dataSetThemeMapper.convertToResponse(theme);
     }
 
     @Override
-    public DataSetThemeResponse updateThemeById(UUID uuid, String name, String description, MultipartFile icon) throws IOException {
+    public DataSetThemeResponse updateThemeById(UUID uuid, String name, String description, MultipartFile icon, String token) throws IOException {
         DataSetTheme dataSetTheme= dataSetThemeRepository.findByUuidAndDeletedFalse(uuid);
         if (dataSetTheme == null) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND,"No theme found with id: "+uuid);
@@ -87,6 +92,17 @@ public class DataSetThemeServiceImplementation implements DataSetThemeService {
             dataSetTheme.setIconPath(UPLOAD_DIR+uniqueFileName);
             dataSetTheme.setIcon(imageUrl+'/'+uniqueFileName);
         }
+
+        if (token == null || token.isEmpty()) {
+            throw new IllegalStateException("Token manquant");
+        }
+
+        UserInfoResponse user = authServiceClient.getCurrentUser(token);
+        String email = user.getEmail();
+
+
+        dataSetTheme.setUpdatedBy(email);
+
 //        String email = SecurityContextHolder.getContext().getAuthentication().getName();
 //        dataSetTheme.setUpdatedBy(email);
 
@@ -141,7 +157,7 @@ public class DataSetThemeServiceImplementation implements DataSetThemeService {
         }
     }
 
-    private DataSetTheme createThemeObject(String name, String description, MultipartFile file) throws IOException {
+    private DataSetTheme createThemeObject(String name, String description, MultipartFile file, String token) throws IOException {
         DataSetTheme theme = new DataSetTheme();
         theme.setUuid(UUID.randomUUID());
         theme.setName(name.trim());
@@ -150,11 +166,19 @@ public class DataSetThemeServiceImplementation implements DataSetThemeService {
         theme.setIconData(file.getBytes());
         theme.setIcon(imageUrl+'/'+uniqueFileName);
 
-        //String email = SecurityContextHolder.getContext().getAuthentication().getName();
-        String email = request.getHeader("X-User-Email");
-        if (email == null || email.isEmpty()) {
-            throw new IllegalStateException("User email not found in request headers");
+//        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+//        String email = request.getHeader("X-User-Email");
+//        if (email == null || email.isEmpty()) {
+//            throw new IllegalStateException("User email not found in request headers");
+//        }
+
+        if (token == null || token.isEmpty()) {
+            throw new IllegalStateException("Token manquant");
         }
+
+        UserInfoResponse user = authServiceClient.getCurrentUser(token);
+        String email = user.getEmail();
+
 
         theme.setCreatedBy(email);
 

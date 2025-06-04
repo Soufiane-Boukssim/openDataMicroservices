@@ -1,15 +1,13 @@
 package com.soufiane.authservice.controllers;
 
-import com.soufiane.authservice.dtos.user.UserLoginRequest;
-import com.soufiane.authservice.dtos.user.UserLoginResponse;
-import com.soufiane.authservice.dtos.user.UserRegisterRequest;
-import com.soufiane.authservice.dtos.user.UserRegisterResponse;
+import com.soufiane.authservice.dtos.user.*;
 import com.soufiane.authservice.services.UserService;
+import com.soufiane.sharedlibrary.dto.UserInfoResponse;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.web.bind.annotation.*;
 
 @RestController @RequestMapping("/api")
 public class UserController {
@@ -25,6 +23,11 @@ public class UserController {
     @PostMapping("/login")
     public UserLoginResponse login(@RequestBody UserLoginRequest user) {
         return userService.verify(user);
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<UserInfoResponse> getCurrentUser(@AuthenticationPrincipal UserDetails user) {
+        return ResponseEntity.ok(new UserInfoResponse(user.getUsername())); // ou un objet plus complet
     }
 
 }

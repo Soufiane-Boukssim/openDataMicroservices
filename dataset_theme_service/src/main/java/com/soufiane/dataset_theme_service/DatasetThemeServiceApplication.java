@@ -2,8 +2,10 @@ package com.soufiane.dataset_theme_service;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.cloud.openfeign.EnableFeignClients;
 import org.springframework.context.annotation.ComponentScan;
 
+@EnableFeignClients(basePackages = "com.soufiane.dataset_theme_service.client")
 @SpringBootApplication
 @ComponentScan(basePackages = {
         "com.soufiane.dataset_theme_service",
